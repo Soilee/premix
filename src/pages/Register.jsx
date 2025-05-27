@@ -1,48 +1,55 @@
-import { useNavigate } from "react-router-dom";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth, db } from "../firebase";
+import { ref, set, get } from "firebase/database";
+import { useNavigate, Link } from "react-router-dom";
 import Sociallogin from "../components/Sociallogin";
 import Fields from "../components/Fields";
-import { Link } from "react-router-dom";
 import "../index.css";
 import { useState } from "react";
+import { updateProfile } from "firebase/auth";
+
 
 const Register = () => {
   const navigate = useNavigate();
-
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
 
-    console.log("Username:", username);
-    console.log("Email:", email);
-    console.log("Password:", password);
-
-    // Form alanlarının boş olup olmadığını kontrol et
     if (!username || !email || !password) {
       setErrorMessage("Lütfen tüm alanları doldurun.");
       return;
     }
 
-    // E-posta doğrulama (Basit bir regex ile)
+    const usernameRef = ref(db, `usernames/${username}`);
+    const usernameSnap = await get(usernameRef);
+    if (usernameSnap.exists()) {
+      setErrorMessage("Bu kullanıcı adı zaten kayıtlı.");
+      return;
+    }
+
     const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
     if (!emailPattern.test(email)) {
       setErrorMessage("Lütfen geçerli bir e-posta adresi girin.");
       return;
     }
 
-    const userData = {
-      username: username,
-      email: email,
-      password: password,
-    };
-
-    localStorage.setItem("user", JSON.stringify(userData));
-
-    alert("Kayıt başarılı! Giriş yapabilirsiniz.");
-    navigate("/login");
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(auth.currentUser, { displayName: username });
+      await set(ref(db, `usernames/${username}`), email);
+      alert("Kayıt başarılı! Giriş yapabilirsiniz.");
+      navigate("/login");
+    } catch (error) {
+      if (error.code === "auth/email-already-in-use") {
+        setErrorMessage("Bu e-posta zaten kayıtlı.");
+      } else {
+        setErrorMessage(error.message);
+      }
+    }
   };
 
   return (
@@ -55,16 +62,14 @@ const Register = () => {
       </p>
 
       <form className="login-form" onSubmit={handleRegister}>
-
         <Fields
           type="text"
           placeholder="Kullanıcı Adı"
           icon="person"
           required
           value={username}
-          onChange={(e) => setUsername(e.target.value)}  
+          onChange={(e) => setUsername(e.target.value)}
         />
-
 
         <Fields
           type="email"
@@ -72,9 +77,8 @@ const Register = () => {
           icon="mail"
           required
           value={email}
-          onChange={(e) => setEmail(e.target.value)}  
+          onChange={(e) => setEmail(e.target.value)}
         />
-
 
         <Fields
           type="password"
@@ -82,9 +86,8 @@ const Register = () => {
           icon="lock"
           required
           value={password}
-          onChange={(e) => setPassword(e.target.value)}  
+          onChange={(e) => setPassword(e.target.value)}
         />
-
 
         {errorMessage && <p className="error-message">{errorMessage}</p>}
 

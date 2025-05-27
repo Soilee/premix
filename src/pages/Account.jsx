@@ -1,22 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import ProfilePhoto from '../components/ProfilePhoto';
 import { useNavigate } from "react-router-dom";
+import { auth } from "../firebase";
 
 export default function Account() {
- const storedUser = JSON.parse(localStorage.getItem('user'));
-    const [photo, setPhoto] = useState(localStorage.getItem('profileImage') || 'https://placehold.co/40x40');
+    const firebaseUser = auth.currentUser;
+    const storedUser = JSON.parse(localStorage.getItem('user'));
 
-const [userData, setUserData] = useState({
-username: "",
-email: "",
-password: "",
-nickname: "",
-LoL: "",
-csgo: "",
-Valo: "",
-bio: "",
+const [photo, setPhoto] = useState(
+    localStorage.getItem('profileImage') ||
+    firebaseUser?.photoURL ||
+    'https://placehold.co/40x40'
+);
 
-});
+
+    const [userData, setUserData] = useState({
+        username: firebaseUser?.displayName || storedUser?.username || "",
+        email: firebaseUser?.email || storedUser?.email || "",
+        password: storedUser?.password || "",
+        nickname: storedUser?.nickname || "",
+        LoL: storedUser?.LoL || "",
+        csgo: storedUser?.csgo || "",
+        Valo: storedUser?.Valo || "",
+        bio: storedUser?.bio || "",
+    });
 
 // Oyun istatistikleri için state
     const [csgoStats, setCsgoStats] = useState(null);
@@ -75,10 +82,10 @@ bio: "",
                 .catch(() => setValoStats(null));
         }
     }, [userData.Valo]);
-
-// özel profil düzenleme butonu 
-    const currentUser = JSON.parse(localStorage.getItem("user"));
-    const isOwnProfile = currentUser && currentUser.username === userData.username;
+// kişinin kendine özel buton gözükmesi için 
+const isOwnProfile =
+  (firebaseUser && firebaseUser.email === userData.email) ||
+  (storedUser && storedUser.username === userData.username);
 const navigate = useNavigate();
 
 return (

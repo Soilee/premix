@@ -1,7 +1,18 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { auth } from "../firebase";
+import { getUsername } from "../utils/getUsername";
 
 function Footer() {
+    const firebaseUser = auth.currentUser;
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    const isLoggedIn = !!(firebaseUser || storedUser);
+    // kullanıcı adını her yerde kullanmak için gerekli olan kod böyle tüm hataları çözcem
+    const username =
+        firebaseUser?.displayName ||
+        storedUser?.username ||
+        storedUser?.displayName ||
+        "Profil";
     return (
         <footer className="footer">
             <div className="footer-content">
@@ -13,14 +24,14 @@ function Footer() {
                         <h3>SAYFALAR</h3>
                         <ul>
                             <li>
-                               {/* Sayfanın en üstüne çıkmak için */}
+                               {/*   Sayfanın en üstüne çıkmak için */}
                            <button onClick={function() { window.scrollTo({ top: 0, behavior: "smooth" }); }}>
                               Başa dön
                             </button>
                             </li>
                             <li><Link to="/">Anasayfa</Link></li>
                             <li><Link to="/about">Hakkımızda</Link></li>
-                            <li><Link to="/account">Profil</Link></li>
+                            <li><Link to="/account">{getUsername()}</Link></li>
                             <li><Link to="/login">Giriş</Link></li>
                         </ul>
                     </div>

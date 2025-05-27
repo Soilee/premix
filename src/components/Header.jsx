@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { getUsername } from "../utils/getUsername";
 
 function Header({isAuthenticated, onLogout}){
     const storedUser = JSON.parse(localStorage.getItem("user"));
@@ -12,14 +13,14 @@ function Header({isAuthenticated, onLogout}){
                 <ul>
                     <li><Link to="/">Anasayfa</Link></li>
                     <li><Link to="/about">Hakkımızda</Link></li>
-                    {isAuthenticated ? (
-                        <li>
-                            <Link to="/account"> {storedUser.username} </Link>
-                            <button onClick={onLogout} className="logout-btn">Çıkış Yap</button>
-                        </li>
-                    ) : (
-                    <li><Link to="/login">Giriş Yap</Link></li>
-                    )}
+{isAuthenticated ? (
+<li>
+    <Link to="/account">{getUsername()}</Link>
+    <button onClick={onLogout} className="logout-btn">Çıkış Yap</button>
+</li>
+) : (
+    <li><Link to="/login">Giriş Yap</Link></li>
+)}
                 </ul>
             </nav>
         </header>
