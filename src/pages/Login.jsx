@@ -2,41 +2,37 @@ import Sociallogin from "../components/Sociallogin";
 import Fields from "../components/Fields";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { auth } from "../firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 const Login = ({ setIsAuthenticated }) => {
   const navigate = useNavigate();
-
-  const [username, setUsername] = useState("");
+  
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleLogin = (e) => {
-    e.preventDefault();
 
-    const storedUser = JSON.parse(localStorage.getItem("user"));
+const handleLogin = async (e) => {
+  e.preventDefault();
 
-    if (!username || !password) {
-      setErrorMessage("Lütfen kullanıcı adı ve şifre girin!");
-      return;
-    }
+  if (!email || !password) {
+    setErrorMessage("Lütfen e-posta ve şifre girin!");
+    return;
+  }
 
-    if (storedUser) {
-      if (
-        storedUser.username === username &&
-        storedUser.password === password
-      ) {
-        localStorage.setItem("isAuthenticated", true);
-        setIsAuthenticated(true);
-        alert(`Hoşgeldin, ${storedUser.username}!`);
-        navigate("/");
-        window.location.reload();
-      } else {
-        setErrorMessage("Kullanıcı adı veya şifre hatalı!");
-      }
-    } else {
-      setErrorMessage("Kullanıcı bulunamadı.");
-    }
-  };
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    setIsAuthenticated(true);
+    alert("Hoşgeldin!");
+    navigate("/");
+    window.location.reload();
+  } catch (error) {
+    setErrorMessage("Mailiniz veya şifreniz yanlış!");
+  }
+};
+
+
 
   return (
     <div className="login-container">
@@ -49,12 +45,12 @@ const Login = ({ setIsAuthenticated }) => {
 
       <form className="login-form" onSubmit={handleLogin}>
         <Fields
-          type="text"
-          placeholder="Kullanıcı Adı"
-          icon="person"
+          type="email"
+          placeholder="E-posta"
+          icon="mail"
           required
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
 
         <Fields

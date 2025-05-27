@@ -11,11 +11,11 @@ function About(){
                 <h3>Kurucular</h3>
                 <div className="founder">
                     <img src="google.svg" alt="Kurucu"/>
-                    <h4>Ozan İçli</h4>
+                    <h4>Ozan</h4>
                 </div>
                 <div className="founder">    
                     <img src="google.svg" alt="Kurucu" />
-                    <h4>Atilla Duhan Yılmaz</h4>
+                    <h4>Atilla</h4>
                 </div>
             </div>
             <Contact />

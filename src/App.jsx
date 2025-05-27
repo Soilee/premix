@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useNavigate } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./firebase";
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Header from "./components/Header";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -13,61 +14,68 @@ import Account from "./pages/Account";
 import About from "./pages/About";
 import Footer from "./components/Footer";
 import AccountChange from "./pages/AccountChange";
-
-
-
-
-  
+import { getUsername } from "./utils/getUsername";
+import { useNavigate } from "react-router-dom";
+import { signOut } from "firebase/auth";
 
 
 function App() {
+  const [currentUser, setCurrentUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(null);
-  const navigate=useNavigate();
-  
-  const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-  const username = storedUser.username || "Misafir";
-  const profileImage=localStorage.getItem("profileImage") || "https://placehold.co/40x40";
 
+   const navigate = useNavigate();
 
-  // Tarayıcı kapansa bile giriş bilgisi kalsın diye localStorage kontrolü
-  useEffect(()=>{
-    const loggedIn=localStorage.getItem("isAuthenticated")==="true";
-    setIsAuthenticated(loggedIn);
-  },[]);
+  const username = "Kullanıcı";
+  const profileImage = "https://placehold.co/40x40";
 
-    const handleLogout=()=>{
-    console.log('Logging out...');
-    localStorage.clear();
-    setIsAuthenticated(false);
-    navigate("/login");
-    alert("Çıkış yapıldı.");
-  };
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsAuthenticated(!!user);
+      setCurrentUser(user);
+      if (!user) {
+        localStorage.clear();
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
+const handleLogout = async () => {
+  await signOut(auth); // Firebase kısmında da oturumu kapatmak için 
+  localStorage.clear();
+  setIsAuthenticated(false);
+  alert("Çıkış yapıldı.");
+  navigate("/login");
+  window.location.reload();
+};
 
   return (
-<>
-    
+    <>
       <div className="App">
         <Header isAuthenticated={isAuthenticated} onLogout={handleLogout} />
         <main>
           <Routes>
             <Route path="/" element={<Home isAuthenticated={isAuthenticated} />} />
-
             <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
             <Route path="/register" element={<Register setIsAuthenticated={setIsAuthenticated} />} />
             <Route path="/valorant" element={isAuthenticated === null ? null : isAuthenticated ? <Valorant /> : <Navigate to="/login" />} />
             <Route path="/csgo" element={isAuthenticated === null ? null : isAuthenticated ? <CsGo /> : <Navigate to="/login" />} />
             <Route path="/lol" element={isAuthenticated === null ? null : isAuthenticated ? <LoL /> : <Navigate to="/login" />} />
-            <Route path="/account" element={<Account />}/>
-            <Route path="/about" element={<About />}/>
+            <Route path="/account" element={<Account />} />
+            <Route path="/about" element={<About />} />
             <Route path="/accountchange" element={<AccountChange />} />
           </Routes>
         </main>
-        <Footer/>
+        <Footer />
       </div>
-      
 {isAuthenticated && (
-  <Chat username={username} profileImage={profileImage} />
+<Chat
+  username={getUsername()}
+  profileImage={
+    localStorage.getItem("profileImage") ||
+    (currentUser && currentUser.photoURL) ||
+    "https://placehold.co/40x40"
+  }
+/>
 )}
     </>
   );

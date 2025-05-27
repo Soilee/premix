@@ -1,28 +1,34 @@
 import React, { useState, useEffect } from "react";
 import ProfilePhoto from "../components/ProfilePhoto";
 import { useNavigate } from "react-router-dom";
+import { auth } from "../firebase";
+import { updateProfile } from "firebase/auth";
 
 export default function AccountChange() {
     const navigate = useNavigate();
     const storedUser = JSON.parse(localStorage.getItem("user"));
-    const [photo, setPhoto] = useState(localStorage.getItem("profileImage") || "https://placehold.co/40x40");
+    const firebaseUser = auth.currentUser; 
+    const [photo, setPhoto] = useState(
+        firebaseUser?.photoURL ||
+        localStorage.getItem("profileImage") ||
+        "https://placehold.co/40x40"
+    );
     
-const [userData, setUserData] = useState({
-    username: "",
-    email: "",
-    password: "",
-    surname: "",
-    nickname: "",
-    LoL: "",
-    csgo: "",
-    Valo: "",
-    social2: "",
-    social3: "",
-    social4: "",
-    social5: "",
-    bio: "",
-});
-
+    const [userData, setUserData] = useState({
+        username: firebaseUser?.displayName || "",
+        email: firebaseUser?.email || "",
+        password: "",
+        surname: "",
+        nickname: "",
+        LoL: "",
+        csgo: "",
+        Valo: "",
+        social2: "",
+        social3: "",
+        social4: "",
+        social5: "",
+        bio: "",
+    });
     
 
 useEffect(() => {
@@ -53,11 +59,27 @@ useEffect(() => {
         }));
     };
 
-const handleSave=()=>{
-    localStorage.setItem("user",JSON.stringify(userData));
-    localStorage.setItem("profileImage", photo); 
-    alert("Değişiklikler kayıtedildi.")
-}
+    const handleSave = async () => {
+
+        localStorage.setItem("user", JSON.stringify(userData));
+        localStorage.setItem("profileImage", photo);
+
+        let photoURL = photo;
+        if (photo && photo.length > 500) {
+            photoURL = "https://placehold.co/100x100";
+        }
+
+        if (firebaseUser) {
+            await updateProfile(firebaseUser, {
+                displayName: userData.username,
+                photoURL: photoURL,
+            });
+        }
+
+    alert("Değişiklikler kaydedildi.");
+    navigate("/account");
+    window.location.reload();
+};
 
     const handleDelete=()=>{
         localStorage.removeItem("user");
