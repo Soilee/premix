@@ -1,88 +1,255 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+
+const rankImageFiles = [
+  "demir.png",
+  "bronz.png",
+  "gumus.png",
+  "altin.png",
+  "platin.png",
+  "elmas.png",
+  "yucelik.png",
+  "olumsuz.png",
+  "radyant.png"
+];
+
+function getRankImage(rankIndex) {
+  return `/ranks/${rankImageFiles[rankIndex]}`;
+}
 
 function Valorant() {
-    return (
-        <div>
-            <div className="game-logo">
-            <h1>Valorant</h1>
-            </div>
-            <div className="filter-header">
-                <div className="filter">
-                    <label>Oyun Modu</label>
-                    <select>
-                        <option value="0">Tümü</option>
-                        <option value="1">Dereceli</option>
-                        <option value="2">Premier</option>
-                        <option value="3">Derecesiz</option>
-                        <option value="4">Tam Gaz</option>
-                        <option value="5">Özel Oyun</option>
-                        <option value="6">1 vs 1</option>
-                        <option value="7">2 vs 2</option>
-                    </select>
-                </div>
-                <div className="filter">
-                    <label>Minimum Rank</label>
-                    <select>
-                            <option value="0">Demir</option>
-                            <option value="1">Bronz</option>
-                            <option value="2">Gümüş</option>
-                            <option value="3">Altın</option>
-                            <option value="4">Platin</option>
-                            <option value="5">Elmas</option>
-                            <option value="6">Yücelik</option>
-                            <option value="7">Ölümsüz</option>
-                            <option value="8">Radyant</option>
-                    </select>
-                </div>
-                <div className="filter">
-                    <label>Maksimum Rank</label>
-                    <select>
-                            <option value="0">Demir</option>
-                            <option value="1">Bronz</option>
-                            <option value="2">Gümüş</option>
-                            <option value="3">Altın</option>
-                            <option value="4">Platin</option>
-                            <option value="5">Elmas</option>
-                            <option value="6">Yücelik</option>
-                            <option value="7">Ölümsüz</option>
-                            <option value="8">Radyant</option>
-                    </select>
-                </div>
-                <button className="refresh-button">
-                    Uygula / Yenile
-                </button>
-            </div>
-            <div className="find">
-                <div className="find-header">
-                    <div>Kullanıcı</div>
-                    <div>Oyun modu</div>
-                    <div>Lobi kodu</div>
-                    <div>Min. - Maks. rank</div>
-                    <div>Yaş aralığı</div>
-                    <div>Aranan</div>
-                    <div>Tarih</div>
-                </div>
-                <div class="table-row">
-                    <div class="user-cell">
-                        <img src="" alt="Avatar" class="avatar"/>
-                        <span><strong>JOHARD#GAMER</strong></span>
-                    </div>
-                    <div><strong>Dereceli</strong></div>
-                    <div class="lobby-code">TVQ660</div>
-                    <div class="rank-cell">
-                        <img src="" alt="Rank"/>
-                        <span>-</span>
-                        <img src="" alt="Rank"/>
-                        </div>
-                        <div>-</div>
-                        <div><strong>+1</strong></div>
-                        <div class="time-cell">
-                        <span class="clock-icon">🕒</span>
-                        <span><strong>1 dk.</strong></span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+  const [oyunModu, setOyunModu] = useState(0);
+  const [minRank, setMinRank] = useState(0);
+  const [maxRank, setMaxRank] = useState(8);
+  const [filteredPlayers, setFilteredPlayers] = useState([]);
+  const [players, setPlayers] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [newPlayer, setNewPlayer] = useState({
+    username: "",
+    oyunModu: 0,
+    minRank: 0,
+    maxRank: 8,
+    lobbyCode: "",
+    yasAraligi: "",
+    aranan: "",
+  });
+
+  const ranks = ["Demir", "Bronz", "Gümüş", "Altın", "Platin", "Elmas", "Yücelik", "Ölümsüz", "Radyant"];
+  const modes = ["Seç","Tümü","Dereceli", "Premier", "Derecesiz", "Tam Gaz", "Özel Oyun", "1 vs 1", "2 vs 2"];
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("valorantPlayers");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const formattedPlayers = parsed.map(player => ({
+          ...player,
+          oyunModu: Number(player.oyunModu),
+          minRank: Number(player.minRank),
+          maxRank: Number(player.maxRank)
+        }));
+        setPlayers(formattedPlayers);
+        setFilteredPlayers(formattedPlayers);
+      }
+    } catch (error) {
+      console.error("LocalStorage veri okuma hatası:", error);
+      localStorage.removeItem("valorantPlayers");
     }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("valorantPlayers", JSON.stringify(players));
+  }, [players]);
+
+const handleFilter = () => {
+  console.log("Filtreleme yapılıyor:", { oyunModu, minRank, maxRank });
+  const filtered = players.filter((player) => {
+    const isModEqual = oyunModu === 0 || player.oyunModu === oyunModu;
+    const isMinValid = player.minRank >= minRank;
+    const isMaxValid = player.maxRank <= maxRank;
+    console.log("Oyuncu:", player.username, { isModEqual, isMinValid, isMaxValid });
+    return isModEqual && isMinValid && isMaxValid;
+  });
+  setFilteredPlayers(filtered);
+};
+
+  const handleModChange = (e) => setOyunModu(Number(e.target.value));
+  const handleMinRankChange = (e) => setMinRank(Number(e.target.value));
+  const handleMaxRankChange = (e) => setMaxRank(Number(e.target.value));
+
+  const handleAddPlayer = (e) => {
+    e.preventDefault();
+    if (!newPlayer.username.trim()) {
+      alert("Kullanıcı adı zorunludur!");
+      return;
+    }
+    
+    setPlayers([...players, newPlayer]);
+    setFilteredPlayers([...filteredPlayers, newPlayer]);
+    setNewPlayer({
+      username: "",
+      oyunModu: 0,
+      minRank: 0,
+      maxRank: 8,
+      lobbyCode: "",
+      yasAraligi: "",
+      aranan: "",
+    });
+    setShowForm(false);
+  };
+
+  const rankOptions = () => {
+    return ranks.map((rank, i) => (
+      <option value={i} key={i}>{rank}</option>
+    ));
+  };
+
+  const modeOptions = () => {
+    return modes.map((mode, i) => (
+      <option value={i + 1} key={i + 1}>{mode}</option>
+    ));
+  };
+
+  const getModText = (val) => {
+    const valNum = parseInt(val);
+    if (valNum === 0) return "Seç";
+    return modes[valNum - 1] || "Bilinmiyor";
+  };
+
+  const getRankText = (val) => {
+    const valNum = parseInt(val);
+    return ranks[valNum] || "Bilinmiyor";
+  };
+
+  return (
+    <div className="valorant-container">
+      <div className="filter-header">
+        <div className="filter">
+          <label>Oyun Modu</label>
+          <select value={oyunModu} onChange={handleModChange}>
+            {modes.map((mode, i) => (
+              <option value={i + 1} key={i + 1}>{mode}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="filter">
+          <label>Minimum Rank</label>
+          <select value={minRank} onChange={handleMinRankChange}>
+            {ranks.map((rank, i) => (
+              <option value={i} key={i}>{rank}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="filter">
+          <label>Maksimum Rank</label>
+          <select value={maxRank} onChange={handleMaxRankChange}>
+            {ranks.map((rank, i) => (
+              <option value={i} key={i}>{rank}</option>
+            ))}
+          </select>
+        </div>
+
+        <button className="refresh-button" onClick={handleFilter}>
+          Uygula / Yenile
+        </button>
+
+        <button 
+          className="refresh-button" 
+          onClick={() => setShowForm(!showForm)}
+          aria-expanded={showForm}
+        >
+          {showForm ? "İptal" : "Oyuncu Ara"}
+        </button>
+      </div>
+      {showForm && (
+        <form className="form-popup" onSubmit={handleAddPlayer}>
+          <h3>Bilgilerini Gir</h3>
+          <input 
+            placeholder="Kullanıcı Adı*" 
+            value={newPlayer.username} 
+            onChange={(e) => setNewPlayer({ ...newPlayer, username: e.target.value })}
+            required
+          />
+          <input 
+            placeholder="Lobi Kodu" 
+            value={newPlayer.lobbyCode} 
+            onChange={(e) => setNewPlayer({ ...newPlayer, lobbyCode: e.target.value })} 
+          />
+          <input 
+            placeholder="Yaş Aralığı" 
+            value={newPlayer.yasAraligi} 
+            onChange={(e) => setNewPlayer({ ...newPlayer, yasAraligi: e.target.value })} 
+          />
+          <input 
+            placeholder="Aradığı (örn. +1)" 
+            value={newPlayer.aranan} 
+            onChange={(e) => setNewPlayer({ ...newPlayer, aranan: e.target.value })} 
+          />
+
+          <label>Oyun Modu</label>
+          <select 
+            value={newPlayer.oyunModu} 
+            onChange={(e) => setNewPlayer({ ...newPlayer, oyunModu: e.target.value })}
+          >
+            {modeOptions()}
+          </select>
+
+          <label>Minimum Rank</label>
+          <select 
+            value={newPlayer.minRank} 
+            onChange={(e) => setNewPlayer({ ...newPlayer, minRank: e.target.value })}
+          >
+            {rankOptions()}
+          </select>
+
+          <label>Maksimum Rank</label>
+          <select 
+            value={newPlayer.maxRank} 
+            onChange={(e) => setNewPlayer({ ...newPlayer, maxRank: e.target.value })}
+          >
+            {rankOptions()}
+          </select>
+
+          <button type="submit">Ekle</button>
+        </form>
+      )}
+
+      <div className="find">
+        <div className="find-header">
+          <div>Kullanıcı</div>
+          <div>Oyun modu</div>
+          <div>Lobi kodu</div>
+          <div>Min. - Maks. rank</div>
+          <div>Yaş aralığı</div>
+          <div>Aranan</div>
+        </div>
+
+        {(filteredPlayers.length > 0 ? filteredPlayers : players).map((player, index) => (
+          <div className="table-row" key={`${player.username}-${index}`}>
+            <div className="user-cell"><strong>{player.username}</strong></div>
+            <div>{getModText(player.oyunModu)}</div>
+            <div>{player.lobbyCode || "-"}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <img
+                src={getRankImage(player.minRank)}
+                alt={getRankText(player.minRank)}
+                style={{ width: 40, height: 40, verticalAlign: "middle" }}
+              />
+              <span style={{ fontSize: "1.5rem", color: "#fff" }}>-</span>
+              <img
+                src={getRankImage(player.maxRank)}
+                alt={getRankText(player.maxRank)}
+                style={{ width: 40, height: 40, verticalAlign: "middle" }}
+              />
+            </div>
+            <div>{player.yasAraligi || "-"}</div>
+            <div>{player.aranan || "-"}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default Valorant;
